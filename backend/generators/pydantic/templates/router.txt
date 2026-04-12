@@ -1,0 +1,15 @@
+async def router_{{node.id}}(input):
+    output = {}
+{% for field in node.data.output_structure %}
+    output["{{field}}"] = input["{{field}}"]
+{% endfor %}
+
+{% for condition in node.data.conditions %}
+    {% for field in condition[1] %}
+    {{get_and_parse_user_input(condition[1][field][0], field, condition[1][field][1]) | indent(4)}}
+    {% endfor %}
+    if {{condition[0]}}:
+        return "{{node.successors[loop.index0]}}", output
+
+{% endfor %}
+    return "{{node.successors | last}}", output

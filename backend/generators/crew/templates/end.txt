@@ -1,0 +1,20 @@
+{% if node.predecessors|length > 1 %}
+@listen(or_({% for predecessor in node.predecessors %}
+{{predecessor}}
+    {%- if not loop.last %},{% endif %}
+    {% endfor %}
+))
+{% else %}
+@listen({{node.predecessors[0]}})
+{% endif %}
+def end_{{node.id}}(self):
+    result = {}
+{% for field in node.data.output_structure %}
+    {% if node.data.output_structure[field][1] == 0 %}
+    result["{{field}}"] = self.state.{{field}}
+    {% else %}
+    result["{{field}}"] = self.input["{{field}}"]
+    {% endif %}
+{% endfor %}
+
+    return result

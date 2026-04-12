@@ -1,0 +1,173 @@
+{% if agent.data.enabled_handoffs and (agent.data.handoff_input_structure|length > 0 or not agent.data.uses_custom_handoff_prompt) %}
+class Agent_{{agent.id}}_HandoffArgs(BaseModel):
+    """Input schema for Handoff tools."""
+    {% if not agent.data.uses_custom_handoff_prompt %}
+    prompt : str = Field(description="prompt for the called agent")
+    {% endif %}
+    {% for field in agent.data.handoff_input_structure %}
+    {{field}} : {{agent.data.handoff_input_structure[field][0]}}{% if agent.data.handoff_input_structure[field][1] != None %} = Field(description={{agent.data.handoff_input_structure[field][1]}}) {% endif %} 
+    {% endfor %}
+{% endif %}
+
+class Agent_{{agent.id}}(AbstractAgent):
+    {% if agent.data.has_memory %}
+    conversation_history = ""
+
+    {% endif %}
+    {% if agent.data.uses_custom_output_structure %}
+
+    class ResponseFormat(BaseModel):
+        {% for field in agent.data.output_structure %}
+        {{field}} : {{agent.data.output_structure[field][0]}}{% if agent.data.output_structure[field][1] != None %} = Field(description={{agent.data.output_structure[field][1]}}) {% endif %} 
+        {% endfor %}
+        
+    {% endif %}
+
+    async def kickoff(self, messages, input):
+        {% if agent.requires_reset %}
+        self.agent = Agent(
+                        llm = "{{agent.data.model_provider}}/{{agent.data.model_name}}",
+                        role = {{agent.data.role}},
+                        goal = {{agent.data.goal}},
+                        backstory = {{agent.data.backstory}},
+                        {% if agent.data.model_tools|length > 0 or agent.data.handoffs|length > 0 %}
+                        tools = [{% for toolClass in agent.data.model_tools %}{{toolClass}}(), {% endfor %}{% for handoff in agent.data.handoffs %}Agent_{{handoff[0]}}.HandoffTool(), {% endfor %}]
+                            {% endif %}
+                        )
+        {% else %}
+        if self.agent == None:
+            self.agent = Agent(
+                            llm = "{{agent.data.model_provider}}/{{agent.data.model_name}}",
+                            role = {{agent.data.role}},
+                            goal = {{agent.data.goal}},
+                            backstory = {{agent.data.backstory}},
+                            {% if agent.data.model_tools|length > 0 or agent.data.handoffs|length > 0 %}
+                            tools = [{% for toolClass in agent.data.model_tools %}{{toolClass}}(), {% endfor %}{% for handoff in agent.data.handoffs %}Agent_{{handoff[0]}}.HandoffTool(), {% endfor %}]
+                                {% endif %}
+                            )
+        {% endif %}
+        {% if agent.data.has_memory %}
+        new_messages = messages
+        if (self.conversation_history != ""):
+            memory_string = "This is the conversation history so far:\n" \
+                f"[{self.conversation_history}]"
+            messages = new_messages + [{"role" : "system", "content" : memory_string}]
+            self.conversation_history += self.messages_to_string(new_messages)
+        self.conversation_history += self.messages_to_string(new_messages)
+        {% endif %}
+        {% if agent.data.knowledge_sources|length > 0 %}
+        knowledge_string = "You've been provided the following files as sources of knowledge:"
+        {% for knowledgeSource in agent.data.knowledge_sources %}
+        knowledge_string += "\nFile " + {{knowledgeSource[0]}} + ":\n" + {{knowledgeSource[1]}}
+        {% endfor %}
+        messages = messages + [{"role" : "system", "content" : knowledge_string}]
+        {% endif %}
+        request_string = "This is the current request:\n" \
+                f"{self.messages_to_string(messages)}\n"
+        {% if agent.data.guardrails|length > 0 or agent.data.uses_custom_output_structure %}
+        feedback_string_header = "This is the feedback you got from previous responses to this request:\n"
+        feedback_string = ""
+        
+        max_tries = {{agent.data.max_attempts}}
+        ntries = 0
+        accepted = False
+        while (accepted == False and ntries < max_tries):
+            accepted = True
+            request = request_string
+            if (feedback_string != ""):
+                request += feedback_string_header + feedback_string
+            raw_output = self.agent.kickoff(messages = request{% if agent.data.uses_custom_output_structure %}, response_format=Agent_{{agent.id}}.ResponseFormat{% endif %})
+            feedback_messages = [{"role" : "agent", "content" : str(raw_output)}]
+            ntries += 1
+
+            {% if agent.data.uses_custom_output_structure %}
+            try:
+                output = raw_output.pydantic.dict()
+            except AttributeError:
+                feedback_messages.append({"role": "system", "content": "Your reply mustn't include any text. Limit your response to the provided format."})
+                accepted = False
+                continue
+            {% else %}
+            output = {"agent_response" : raw_output.raw}
+            {% endif %}
+            
+
+            {% for guardrail in agent.data.guardrails %}
+            {% for field in guardrail[0][1] %}
+            {{get_and_parse_user_input(guardrail[0][1][field][0], field, guardrail[0][1][field][1]) | indent(16)}}
+            {% endfor %}
+            if ({{guardrail[0][0]}}):
+                accepted = False
+                {% if guardrail[1] == 'Re-run with feedback'%}
+                feedback_messages.append({"role": "system", "content": {{guardrail[2]}}})
+                {% elif guardrail[1] == 'Abort flow' %}
+                raise CriticalGuardrailViolation("Violated critical guardrail")
+                {% endif %}
+            {% endfor %}
+            feedback_string += self.messages_to_string(feedback_messages)
+
+        if (accepted == False and ntries == max_tries):
+            return "ERROR: max tries exceeded"
+
+        {% if agent.data.has_memory %}
+        {% if agent.data.uses_custom_output_structure %}
+        self.conversation_history += self.messages_to_string([{"role":"agent", "content": str(raw_output)}])
+        {% else %}
+        self.conversation_history += self.messages_to_string([{"role":"agent", "content": raw_output.raw}])
+        {% endif %}
+        {% endif %}
+
+        {% if agent.data.logging %}
+        await print_function(f"Agent {{agent.data.name}} called with prompt: {request}")
+        await print_function(f"Agent response: {output}")
+        {% endif %}
+        {% else %}
+        output = self.agent.kickoff(messages = request_string)
+        {% if agent.data.has_memory %}
+        self.conversation_history += self.messages_to_string([{"role":"agent", "content": output.raw}])
+        {% endif %}
+        output = {"agent_response" : output.raw}
+        {% if agent.data.logging %}
+        await print_function(f"Agent {{agent.data.name}} called with prompt: {request_string}")
+        await print_function(f"Agent response: {output}")
+        {% endif %}
+        {% endif %}
+        return output
+
+    {% if agent.data.enabled_handoffs %}
+    class HandoffTool(BaseTool):
+        name: str = "Call {{agent.data.name}} Agent"
+        description: str = {{agent.data.handoff_description}}
+        {% if agent.data.handoff_input_structure|length > 0 or not agent.data.uses_custom_handoff_prompt %}
+        args_schema: BaseModel = Agent_{{agent.id}}_HandoffArgs
+        {% endif %}
+
+        async def _arun(self, {% if not agent.data.uses_custom_handoff_prompt %}prompt, {% endif %}{% for field in agent.data.handoff_input_structure %}{{field}}, {% endfor %}):
+            input = {
+                {% for field in agent.data.handoff_input_structure %}
+                "{{field}}" : {{field}}, 
+                {% endfor %}
+            }
+            {% if agent.data.uses_custom_handoff_prompt %}
+            prompt = {{agent.data.handoff_prompt}}
+            await print_function(f"Calling tool with input: {input}")
+            {% endif %}
+            messages = [
+                {"role": "user", "content": prompt}
+            ]
+            agent_output = await flow.agent_wrapper_{{agent.id}}.kickoff(messages, flow.state, input)
+            return agent_output
+
+        def run_async_agent(self, {% for field in agent.data.handoff_input_structure %}{{field}}, {% endfor %}):
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(self._arun({% for field in agent.data.handoff_input_structure %}{{field}}, {% endfor %}))
+            loop.close()
+            return result
+        
+        def _run(self, {% for field in agent.data.handoff_input_structure %}{{field}}, {% endfor %}):
+            with ThreadPoolExecutor() as executor:
+                future = executor.submit(self.run_async_agent, {% for field in agent.data.handoff_input_structure %}{{field}}, {% endfor %})
+                result = future.result()
+                return result
+    {% endif %}

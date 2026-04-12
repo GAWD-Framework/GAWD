@@ -1,0 +1,15 @@
+{% if tool.args|length > 0 %}
+class {{tool.function_name}}_args(BaseModel):
+    {% for arg in tool.args %}
+    {{arg}} : {{tool.args[arg].type}} = Field(..., description="{{tool.args[arg].description}}")
+    {% endfor %}
+{% endif %}
+
+class {{tool.function_name}}(BaseTool):
+    name : str = "{{tool.tool_name}}"
+    description : str = "{{tool.description}}"
+    {% if tool.args|length > 0 %}
+    args_schema : Type[BaseModel] = {{tool.function_name}}_args
+        {% endif %}
+    def _run(self, {% for arg in tool.args %}{{arg}} : {{tool.args[arg].type}}, {% endfor %}):
+        return {{tool.function_name}}_core({% for arg in tool.args %}{{arg}}, {% endfor %})

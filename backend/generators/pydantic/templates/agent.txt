@@ -1,0 +1,145 @@
+class Agent_{{agent.id}}:
+    {% if agent.data.has_memory %}
+    message_history = None
+    {% endif %}
+    {% if agent.data.uses_custom_output_structure %}
+    class ResponseFormat(BaseModel):
+        {% for field in agent.data.output_structure %}
+        {{field}} : {{agent.data.output_structure[field][0]}}{% if agent.data.output_structure[field][1] != None %} = Field(description={{agent.data.output_structure[field][1]}}) {% endif %} 
+        {% endfor %}
+
+    {% endif %}
+    {% if agent.data.input|length > 0 %}
+    @dataclass
+    class Dependencies: # variables that the agent receives as input. The state is accessed directly
+        {% for field in agent.data.input %}
+        {{field}} : {{agent.data.input[field][0]}} 
+        {% endfor %}
+
+    {% endif %}
+    def __init__(self): # initializing agent in __init__ avoids dependency conflicts with handoff tools
+        agent = Agent("{{agent.data.model_provider}}:{{agent.data.model_name}}", 
+                    {% if agent.data.uses_custom_output_structure %} output_type = Agent_{{agent.id}}.ResponseFormat, 
+                    {% endif %}
+                    {% if agent.data.input|length > 0 %} deps_type = Agent_{{agent.id}}.Dependencies, 
+                    {% endif %}
+                    retries = {{agent.data.max_attempts}},
+                    {% if agent.data.model_tools|length > 0 or agent.data.handoffs|length > 0 %}
+                    tools = [{% for tool in agent.data.model_tools %}Tool({{tool[0]}}, name="{{tool[1]}}"), {% endfor %}{% for handoff in agent.data.handoffs %}Agent_{{handoff[0]}}.handoff_agent_{{handoff[0]}}, {% endfor %}]
+                    {% endif %}
+                    )
+    
+        @agent.instructions
+        def add_role({% if agent.data.input|length > 0%}ctx: RunContext[Agent_{{agent.id}}.Dependencies]{% endif %}):
+            return "Your role is: " + {{agent.data.role}}
+
+        @agent.instructions
+        def add_goal({% if agent.data.input|length > 0%}ctx: RunContext[Agent_{{agent.id}}.Dependencies]{% endif %}):
+            return "Your goal is: " + {{agent.data.goal}}
+
+        @agent.instructions
+        def add_backstory({% if agent.data.input|length > 0%}ctx: RunContext[Agent_{{agent.id}}.Dependencies]{% endif %}):
+            return "Your backstory is: " + {{agent.data.backstory}}
+
+        {% if agent.data.uses_custom_output_structure %}
+        @agent.system_prompt
+        def add_structure_prompt():
+            return "Your answer must adhere to the requested output structure. Don't include any additional text in your response."
+
+        {% endif %}
+
+        {% if agent.data.knowledge_sources|length > 0 %}
+        @agent.system_prompt
+        def add_knowledge():
+            knowledge_string = "You've been provided the following files as sources of knowledge:"
+            {% for knowledgeSource in agent.data.knowledge_sources %}
+            knowledge_string += "\nFile " + {{knowledgeSource[0]}} + ":\n" + {{knowledgeSource[1]}}
+            {% endfor %}
+            return knowledge_string
+        {% endif %}
+
+        {% if agent.data.model_tools|length > 0 or agent.data.handoffs|length > 0 %}
+        @agent.system_prompt
+        def enforce_tool_use():
+            return (
+                "When using tools, do NOT write out function calls as text or XML (e.g., do not use <function> tags). "
+                "Simply execute the tool."
+            )
+        {% endif %}
+
+        {% if agent.data.guardrails|length > 0 or agent.data.uses_custom_output_structure %}
+        @agent.output_validator # if the validator fails several times, the feedback from previous failures is kept
+        async def validate_output(ctx, output):
+            {% if agent.data.uses_custom_output_structure %}
+            try:
+                output_dict = output.model_dump()
+            except AttributeError:
+                raise ModelRetry("Your reply mustn't include any text. Limit your response to the provided format.")
+            {% else %}
+            output_dict = {"agent_response" : output}
+            {% endif %}
+
+            {% for guardrail in agent.data.guardrails %}
+            {% for field in guardrail[0][1] %}
+            {{get_and_parse_user_input(guardrail[0][1][field][0], field, guardrail[0][1][field][1]) | indent(8)}}
+            {% endfor %}
+            if ({{guardrail[0][0]}}):
+                {% if guardrail[1] == 'Re-run with feedback'%}
+                raise ModelRetry({{guardrail[2]}})
+                {% elif guardrail[1] == 'Abort flow' %}
+                raise CriticalGuardrailViolation("Violated critical guardrail")
+                {% endif %}
+            {% endfor %}
+
+            return output
+        {% endif %}
+
+        self.agent = agent
+
+    async def run(self, prompt, input):
+        {% if agent.data.input|length > 0 %}
+        dependencies = Agent_{{agent.id}}.Dependencies(
+            {% for field in agent.data.input %}
+            {{field}} = input["{{field}}"], 
+            {% endfor %}
+        )
+        {% endif %}
+        request_string = "This is the current request:\n" + prompt
+        result = await self.agent.run(request_string {% if agent.data.input|length > 0 %}, deps = dependencies{% endif %}{% if agent.data.has_memory %}, message_history = self.message_history{% endif %})
+        {% if agent.data.has_memory %}
+        self.message_history = result.all_messages()
+        {% endif %}
+        {% if agent.data.uses_custom_output_structure %}
+        output = result.output.model_dump()
+        {% else %}
+        output = {"agent_response" : result.output}
+        {% endif %}
+        {% if agent.data.logging %}
+        await print_function(f"Agent {{agent.data.name}} called with prompt: {request_string}")
+        await print_function(f"Agent response: {output}")
+        {% endif %}
+        return output
+
+    {% if agent.data.enabled_handoffs %}
+    async def handoff_agent_{{agent.id}}(
+            {% if not agent.data.uses_custom_handoff_prompt %}
+            prompt : str = Field(description = "prompt for the called agent")
+            {% endif %}
+            {% for field in agent.data.input %}
+            {{field}} : {{agent.data.input[field][0]}}{% if agent.data.input[field][1] != None %} = Field(description={{agent.data.input[field][1]}}) {% endif %}, 
+            {% endfor %}
+            ):
+        input = {
+            {% for field in agent.data.input %}
+            "{{field}}" : {{field}},
+            {% endfor %}
+        }
+        {% if agent.data.uses_custom_handoff_prompt %}
+        prompt = {{agent.data.handoff_prompt}}
+        {% endif %}
+        request_string = "This is the current request:\n" + prompt
+        output = await agent_wrapper_{{agent.id}}.run(request_string, input)
+        return output
+    handoff_agent_{{agent.id}}.__doc__ = {{agent.data.handoff_description}} # serves as description to the handoff tool
+
+    {% endif %}

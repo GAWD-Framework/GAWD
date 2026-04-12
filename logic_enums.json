@@ -1,0 +1,59 @@
+{
+    "StateVariableDefaultValueSources": {
+        "USERINPUT": 0,
+        "HARDCODED": 1
+    },
+
+    "VariableSources": {
+        "STATEVAR": 0,
+        "INPUTVAR": 1
+    },
+
+    "RichInputTokenTypes": {
+        "STRING": 0,
+        "STATEVAR": 1,
+        "INPUTVAR": 2,
+        "OUTPUTVAR": 3
+    },
+
+    "DataTypes": {
+        "NUM": 0,
+        "STR": 1,
+        "BOOL": 2
+    },
+
+    "TokenTypes": {
+        "UNKNOWN": -1,
+        "HARDCODED": 0,
+        "OPERATOR": 1,
+        "STATEVAR": 3,
+        "INPUTVAR": 4,
+        "USERINPUT": 5,
+        "OUTPUTVAR": 6
+    }, 
+
+    "Operators": {
+        "ADD": {"resultType": 0, "noperands": 2, "structure": [0, "+", 0]},
+        "SUB": {"resultType": 0, "noperands": 2, "structure": [0, "-", 0]},
+        "MULT": {"resultType": 0, "noperands": 2, "structure": [0, "*", 0]},
+        "DIV": {"resultType": 0, "noperands": 2, "structure": [0, "/", 0]},
+        "MOD": {"resultType": 0, "noperands": 2, "structure": [0, "%", 0]},
+        "LEN_CHAR": {"resultType": 0, "noperands": 1, "structure": ["N. of characters in ", 1]},
+        "LEN_WORD": {"resultType": 0, "noperands": 1, "structure": ["N. of words in ", 1]},
+        "GT": {"resultType": 2, "noperands": 2, "structure": [0, ">", 0]},
+        "LT": {"resultType": 2, "noperands": 2, "structure": [0, "<", 0]},
+        "GEQ": {"resultType": 2, "noperands": 2, "structure": [0, ">=", 0]},
+        "LEQ": {"resultType": 2, "noperands": 2, "structure": [0, "<=", 0]},
+        "EQ": {"resultType": 2, "noperands": 2, "structure": [0, "=", 0]},
+        "NEQ": {"resultType": 2, "noperands": 2, "structure": [0, "!=", 0]},
+        "EMPTY": {"resultType": 2, "noperands": 1, "structure": [1, "is empty"]},
+        "OR": {"resultType": 2, "noperands": 2, "structure": [2, "or", 2]},
+        "AND": {"resultType": 2, "noperands": 2, "structure": [2, "and", 2]}
+    },
+
+    "GuardrailCorrections" : ["Re-run with feedback", "Abort flow"],
+    "GuardrailCorrectionsRequiringInput" : ["Re-run with feedback"],
+
+    "TruthyStrings" : ["t", "T", "true", "True", "TRUE"],
+    "FalsyStrings" : ["f", "F", "false", "False", "FALSE"]
+}

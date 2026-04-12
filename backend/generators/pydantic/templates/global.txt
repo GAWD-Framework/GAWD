@@ -1,0 +1,126 @@
+from pydantic_ai import Agent, RunContext, ModelRetry, Tool
+from dataclasses import dataclass
+from pydantic import BaseModel, Field
+from generators.custom_tools import {% for tool in tools %} {{tools[tool].function_name}}_core{%- if not loop.last %}, {% endif %}{% endfor %}
+
+from typing import Annotated
+from dotenv import load_dotenv
+
+
+load_dotenv(override=True)
+
+truthy_strings = ["t", "true", "y", "yes"]
+falsy_strings = ["f", "false", "n", "no"]
+
+{% for tool in tools %}
+{% with tool = tools[tool] %}
+{% include 'tool.txt' %}
+
+
+{% endwith %}
+{% endfor %}
+
+class CriticalGuardrailViolation(Exception):
+    """Raised when an agent violates a critical guardrail."""
+    pass
+
+async def run_workflow(print_function, input_function):
+    """
+    Runs the workflow.
+    print_function is an async function that will be used for displaying information to the user
+    input_function is an async function that will be used for gathering input from the user
+    """
+{% filter indent(4, first=True) %}
+
+{% for agent in agents %}
+{% if agent.data.connected or agent.data.enabled_handoffs%}
+{% with agent = agent %}
+{% include 'agent.txt' %}
+
+{% endwith %}
+{% endif %}
+{% endfor %}
+
+{% if state|length > 0 %}
+class FlowState(BaseModel):
+    {% for field in state %}
+    {{field}} : {{state[field][0]}} = {{state[field][2]}}
+    {% endfor %}
+
+state = FlowState()
+{% endif %}
+
+{% for node in nodes %}
+    {% if node.type == 'function' and node.data.connected %}
+        {% with node = node %}
+            {% include 'function.txt' %}
+        {% endwith %}
+
+
+    {% elif node.type == 'agent' and node.data.connected %}
+        {% with node = node %}
+            {% include 'agent_node.txt' %}
+        {% endwith %}
+
+
+    {% elif node.type == 'router' and node.data.connected %}
+        {% with node = node %}
+            {% include 'router.txt' %}
+        {% endwith %}
+
+
+    {% elif node.type == 'end' and node.data.connected %}
+        {% with node = node %}
+            {% include 'end.txt' %}
+        {% endwith %}
+
+
+    {% elif node.type == 'start' %}
+        {% with node = node %}
+            {% include 'start.txt' %}
+        {% endwith %}
+
+
+    {% endif %}
+{% endfor %}
+
+{% for agent in agents %}
+{% if agent.data.connected or agent.data.enabled_handoffs %}
+agent_wrapper_{{agent.id}} = Agent_{{agent.id}}()
+{% endif %}
+{% endfor %}
+
+node_functions = {
+    {% for node in nodes %}
+    {% if not node.type == 'start' and node.data.connected %}
+    "{{node.id}}" : {{node.function_name}},
+    {% endif %}
+    {% endfor %}
+}
+
+next_node = await start()
+output = None
+
+while next_node != None:
+    next_node, output = await node_functions[next_node](output)
+
+return output
+{% endfilter %}
+
+async def test_io(print_function, input_function):
+    await print_function("Hello!")
+    rec = await input_function("Enter something...")
+    await print_function(f"Received: {rec}")
+    return "Hi!"
+
+
+# For running directly
+if __name__ == "__main__":
+    import asyncio
+    async def async_print(to_send : str):
+        print(to_send)
+
+    async def async_input(prompt : str):
+        return input(prompt)
+
+    asyncio.run(run_workflow(async_print, async_input))

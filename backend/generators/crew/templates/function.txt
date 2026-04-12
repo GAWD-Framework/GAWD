@@ -1,0 +1,20 @@
+{% if node.predecessors|length > 1 %}
+@listen(or_({% for predecessor in node.predecessors %}
+    {{predecessor}}
+    {%- if not loop.last %},{% endif %}
+    {% endfor %}
+))
+{% endif %}
+@listen({{node.predecessors[0]}})
+async def function_{{node.id}}(self): # is async in case it requires user input
+{% for action in node.data.actions %}
+    {% for field in action[1][1] %}
+    {{get_and_parse_user_input(action[1][1][field][0], field, action[1][1][field][1]) | indent(4)}}
+    {% endfor %}
+    self.state.{{action[0]}} = {{action[1][0]}}
+{% endfor %}
+    output = {}
+{% for field in node.data.output_structure %}
+    output["{{field}}"] = self.input["{{field}}"]
+{% endfor %}
+    self.input = output

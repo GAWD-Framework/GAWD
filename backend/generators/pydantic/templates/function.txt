@@ -1,0 +1,14 @@
+
+async def function_{{node.id}}(input):
+    output = {}
+{% for field in node.data.output_structure %}
+    output["{{field}}"] = input["{{field}}"]
+{% endfor %}
+
+{% for action in node.data.actions %}
+    {% for field in action[1][1] %}
+    {{get_and_parse_user_input(action[1][1][field][0], field, action[1][1][field][1]) | indent(4)}}
+    {% endfor %}
+    state.{{action[0]}} = {{action[1][0]}}
+{% endfor %}
+    return "{{node.successors}}", output

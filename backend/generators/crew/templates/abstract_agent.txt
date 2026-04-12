@@ -1,0 +1,13 @@
+class AbstractAgent(ABC):
+    agent = None
+
+    @classmethod
+    def messages_to_string(self, messages):
+        string = ""
+        for message in messages:
+            string += message["role"] + ": " + message["content"] + "\n"
+        return string
+    
+    @abstractmethod
+    def kickoff(self, messages, flowState, input):
+        pass

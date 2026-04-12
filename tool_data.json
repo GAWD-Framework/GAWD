@@ -1,0 +1,28 @@
+{
+    "Tools": {
+        "Wikipedia": {
+            "function_name": "wikipedia_tool",
+            "tool_name": "Wikipedia Search",
+            "description": "Search Wikipedia for information about a topic.",
+            "args": {
+                "topic": {
+                    "type": "str",
+                    "description": "The topic to search for."
+                }
+            }
+        },
+    
+        "Math": {
+            "function_name": "math_tool",
+            "tool_name": "Math Solver",
+            "description": "Solve a math operation.",
+            "args": {
+                "operation": {
+                    "type": "str",
+                    "description": "String containing the math operation to solve."
+                }
+            }
+        }
+    }
+    
+}

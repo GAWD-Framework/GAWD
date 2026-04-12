@@ -1,0 +1,10 @@
+@start()
+async def start(self):
+    {% if node.data.fields_needing_input|length == 0 %}
+    pass
+    {% else %}
+    {% for field in node.data.fields_needing_input %}
+    {{get_and_parse_user_input(node.data.fields_needing_input[field], "self.state." + field, "\"" + "Enter value for state variable " + field + ": " + "\"") | indent(4)}}
+
+    {% endfor %}
+    {% endif %}

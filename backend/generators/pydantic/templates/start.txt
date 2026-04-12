@@ -1,0 +1,5 @@
+async def start():
+    {% for field in node.data.fields_needing_input %}
+    {{get_and_parse_user_input(node.data.fields_needing_input[field], "state." + field, "\"" + "Enter value for state variable " + field + ": " + "\"") | indent(4)}}
+    {% endfor %}
+    return "{{node.successors}}"

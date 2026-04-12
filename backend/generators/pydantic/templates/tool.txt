@@ -1,0 +1,10 @@
+{% if tool.args|length > 0 %}
+class {{tool.function_name}}_args(BaseModel):
+    {% for arg in tool.args %}
+    {{arg}} : Annotated[{{tool.args[arg].type}}, Field(description="{{tool.args[arg].description}}")]
+    {% endfor %}
+{% endif %}
+
+def {{tool.function_name}}(args: {% if tool.args|length > 0 %}{{tool.function_name}}_args{% endif %}):
+    """{{tool.description}}"""
+    return {{tool.function_name}}_core({% for arg in tool.args %}args.{{arg}}, {% endfor %})

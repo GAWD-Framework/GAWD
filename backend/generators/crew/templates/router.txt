@@ -1,0 +1,26 @@
+{% if node.predecessors|length > 1 %}
+@router(or_({% for predecessor in node.predecessors %}
+{{predecessor}}
+    {%- if not loop.last %},{% endif %}
+    {% endfor %}
+))
+{% else %}
+@router({{node.predecessors[0]}})
+{% endif %}
+async def router_{{node.id}}(self):
+    
+
+{% for condition in node.data.conditions %}
+    {% for field in condition[1] %}
+    {{get_and_parse_user_input(condition[1][field][0], field, condition[1][field][1]) | indent(4)}}
+    {% endfor %}
+    if {{condition[0]}}:
+        return "evt_{{node.successors[loop.index0]}}"
+
+{% endfor %}
+    output = {} # save data to the shared dict for the next node to use
+{% for field in node.data.output_structure %}
+    output["{{field}}"] = self.input["{{field}}"]
+{% endfor %}
+    self.input = output
+    return "evt_{{node.successors | last}}"

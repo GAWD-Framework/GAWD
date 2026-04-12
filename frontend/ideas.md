@@ -1,0 +1,1 @@
+El data de un router tiene una lista de condiciones. Al ConditionEditMenu se le pasa el índice de la condición en la lista.

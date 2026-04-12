@@ -1,0 +1,6 @@
+while True:
+    {{var_name}} = await input_function({{prompt}})
+    if {{var_name}}.strip(): 
+        break 
+    else: 
+        await print_function("Please introduce a non empty string")

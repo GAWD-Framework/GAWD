@@ -1,0 +1,25 @@
+{
+    "ModelProviders" : ["OpenAI", "Google", "Groq"],
+    
+    "ModelNames": [["gpt-4o", "gpt-4o-mini", "o3-mini"], ["gemini-2.0-flash", "gemini-2.0-flash-lite"], ["llama-3.3-70b-versatile"]],
+    
+    "EmbeddingProviders": ["OpenAI", "Google", "Meta"],
+    "EmbeddingModelNames": [["text-embedding-3-small", "text-embedding-4"], ["gemini-embedding-001"], ["meta-1"]],
+    
+    "KnowledgeSourceTypes" :{
+        "PDF": ".pdf",
+        "TXT": ".txt",
+        "WEB": "url"
+    },
+
+    "AcceptedKnowledgeSourceFileTypes": [".txt", ".md"],
+
+    "APIKeysNeeded" : ["OpenAI", "Google", "Groq"],
+    
+    "APIKeyCodes" : {
+        "OpenAI" : "OPENAI_API_KEY",
+        "Google" : "GOOGLE_API_KEY",
+        "Groq" : "GROQ_API_KEY"
+    }
+}
+    

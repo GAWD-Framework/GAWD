@@ -1,0 +1,5 @@
+async def agent_{{node.id}}(input):    
+    output = await agent_wrapper_{{node.id}}.run({{node.data.prompt}}, input)
+    
+    return "{{node.successors}}", output
+    

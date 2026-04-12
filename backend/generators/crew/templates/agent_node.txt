@@ -1,0 +1,20 @@
+{% if node.predecessors|length > 1 %}
+@listen(or_({% for predecessor in node.predecessors %}
+{{predecessor}}
+    {%- if not loop.last %},{% endif %}
+    {% endfor %}
+))
+{% else %}
+@listen({{node.predecessors[0]}})
+{% endif %}
+async def agent_{{node.id}}(self):
+    messages = [
+        {"role": "user", "content": {{node.data.prompt}}},
+        {% if node.data.uses_custom_output_structure %}
+        {"role": "system", "content": "Your reply must conform to the specified output format. Don't include any text."}
+        {% endif %}
+    ]
+    output = await self.agent_wrapper_{{node.id}}.kickoff(messages, self.input)
+    
+    self.input = output
+    

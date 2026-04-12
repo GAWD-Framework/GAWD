@@ -1,0 +1,104 @@
+/* Container: Keeps the tooltip relative to the icon */
+.tooltip_container {
+    position: relative;
+    display: inline-flex; /* Ensures it sits nicely next to text */
+    align-items: center;
+    cursor: help; /* change cursor to question mark on hover */
+  }
+  
+  /* The Trigger Icon */
+  .tooltip_icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666; /* Default icon color */
+    transition: color 0.2s ease;
+  }
+  
+  .tooltip_container:hover .tooltip_icon {
+    color: #007bff; /* Color on hover */
+  }
+  
+  /* The Tooltip Box (Hidden by default) */
+  .tooltip_box {
+    position: absolute;
+    visibility: hidden;
+    opacity: 0;
+    width: max-content;
+    max-width: 200px; /* Prevents it from getting too wide */
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 1.4;
+    z-index: 1000;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    
+    /* Shadow for depth */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Show the tooltip on hover */
+  .tooltip_container:hover .tooltip_box {
+    visibility: visible;
+    opacity: 1;
+  }
+  
+  /* --- Positioning Variants --- */
+  
+  /* TOP (Default) */
+  .tooltip_top {
+    bottom: 125%; /* Move it above the icon */
+    left: 50%;
+    transform: translateX(-50%); /* Center it horizontally */
+  }
+  
+  /* BOTTOM */
+  .tooltip_bottom {
+    top: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  /* RIGHT */
+  .tooltip_right {
+    top: 50%;
+    left: 125%;
+    transform: translateY(-50%);
+  }
+  
+  /* LEFT */
+  .tooltip_left {
+    top: 50%;
+    right: 125%;
+    transform: translateY(-50%);
+  }
+  
+  /* --- The Little Arrow --- */
+  .tooltip_arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+  }
+  
+  /* Arrow logic for Top position */
+  .tooltip_top .tooltip_arrow {
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px 5px 0 5px;
+    border-color: #333 transparent transparent transparent;
+  }
+  
+  /* Arrow logic for Bottom position */
+  .tooltip_bottom .tooltip_arrow {
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 0 5px 5px 5px;
+    border-color: transparent transparent #333 transparent;
+  }
+  /* You can add arrow logic for Left/Right similarly if needed */

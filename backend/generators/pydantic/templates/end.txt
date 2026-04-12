@@ -1,0 +1,11 @@
+async def end_{{node.id}}(input):
+    result = {}
+{% for field in node.data.output_structure %}
+    {% if node.data.output_structure[field][1] == 0 %}
+    result["{{field}}"] = state.{{field}}
+    {% else %}
+    result["{{field}}"] = input["{{field}}"]
+    {% endif %}
+{% endfor %}
+
+    return None, result

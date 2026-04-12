@@ -1,0 +1,11 @@
+while True:
+    {{var_name}} = await input_function({{prompt}})
+    {{var_name}} = {{var_name}}.strip().lower()
+    if {{var_name}} in truthy_strings:
+        {{var_name}} = True
+        break
+    elif {{var_name}} in falsy_strings:
+        {{var_name}} = False
+        break
+    else:
+        await print_function("Please introduce a recognized response like 'y', 'n', 'true', or 'false'.")

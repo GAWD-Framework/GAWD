@@ -1,0 +1,7 @@
+while True:
+    {{var_name}} = await input_function({{prompt}})
+    try:
+        {{var_name}} = float({{var_name}})
+        break 
+    except ValueError:
+        await print_function("Please introduce a valid number")
