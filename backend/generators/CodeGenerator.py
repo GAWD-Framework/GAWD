@@ -57,6 +57,7 @@ class CodeGenerator(ABC):
         'MOD' : "{{operand1}} % {{operand2}}",
         'LEN_CHAR' : "len({{operand1}})",
         'LEN_WORD' : "len({{operand1}}.split())",
+        'CONCAT' : "str({{operand1}}) + str({{operand2}})",
         'GT' : "{{operand1}} > {{operand2}}",
         'LT' : "{{operand1}} < {{operand2}}",
         'GEQ' : "{{operand1}} >= {{operand2}}",
@@ -64,6 +65,7 @@ class CodeGenerator(ABC):
         'EQ' : "{{operand1}} == {{operand2}}",
         'NEQ' : "{{operand1}} != {{operand2}}",
         'EMPTY' : "len({{operand1}}) == 0",
+        'NOT' : "not {{operand1}}",
         'OR' : "{{operand1}} or {{operand2}}",
         'AND' : "{{operand1}} and {{operand2}}"
         }
@@ -74,14 +76,12 @@ class CodeGenerator(ABC):
         The returned string contains only the condition evaluation line. Not "if" or ":".
         Returns a dict of {variable_name: [type, prompt]} for user input variables used
         """
-        # print(condition)
         user_input_variables = {}
         def renderOperand(index, expected_op_type):
             """
             Returns the string corresponding to the operand at position index in the condition. 
             op_type is the type of the operand. Returns the string and the index of the next operand.
             """
-            # print(condition[index])
             op_type = condition[index][0]
             op_value = condition[index][1]
 
@@ -137,14 +137,12 @@ class CodeGenerator(ABC):
         Returns the string corresponding to the action. The logic is too complex to be done directly in jinja. 
         Returns a dict of {variable_name: [type, prompt]} for user input variables used
         """
-        # print("Action: ", action)
         user_input_variables = {}
         def renderOperand(index, expected_op_type):
             """
             Returns the string corresponding to the operand at position index in the condition. 
             op_type is the type of the operand. Returns the string and the index of the next operand.
             """
-            # print("Operand: ", action[index])
 
             op_type = action[index][0]
             op_value = action[index][1]
@@ -189,7 +187,6 @@ class CodeGenerator(ABC):
     
     def get_and_parse_user_input(self, data_type, var_name, prompt):
         """Prompt should be a string containing a correctly formatted python string"""
-        print("Data type: ", data_type, "Var name: ", var_name, "Prompt: ", prompt)
         if data_type == self.DataTypes["STR"]:
             template = self.environment.get_template("get_string_input.txt")
         elif data_type == self.DataTypes["NUM"]:
@@ -215,7 +212,7 @@ class CodeGenerator(ABC):
 
         for token in tokens:
             if (token[0] == self.RichInputTokenTypes["STRING"]):
-                curated_list.append(self.curate_string(token[1]))
+                curated_list.append(self.curate_string(token[1]).replace("\\u00a0", " ")) # replace non-breaking spaces with regular spaces
 
             elif (token[0] == self.RichInputTokenTypes["STATEVAR"]):
                 if (external_state):
@@ -288,7 +285,6 @@ class CodeGenerator(ABC):
         """
         global_template = self.environment.get_template(main_template_file)
         data = self.refactor_flow_data(data)
-        print(data)
         with open(f"{dir_name}/{script_name}", mode="w", encoding="utf-8") as f:
             content = global_template.render(data)
             f.write(content)

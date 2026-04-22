@@ -8,7 +8,6 @@ export function SavedFlowsMenu( { setActiveFlow, getCurrentFlow, connection, clo
         async function fetchFlows() {
             try {
                 const res = await connection.get("/flows");
-                console.log(res);
                 setFlowNames(res.data);
             } catch (e) {
                 console.log(e);
@@ -25,10 +24,8 @@ export function SavedFlowsMenu( { setActiveFlow, getCurrentFlow, connection, clo
             node.data.editing = false;
         }
 
-        console.log(currentFlow);
         try {
             const res = await connection.post(`/flows/${newFlowName}`, {"data": currentFlow});
-            console.log(res);
             // if no exception is thrown, the flow was saved correctly
             setFlowNames([...flowNames, newFlowName]);
             
@@ -44,10 +41,8 @@ export function SavedFlowsMenu( { setActiveFlow, getCurrentFlow, connection, clo
             node.data.editing = false;
         }
 
-        console.log(currentFlow);
         try {
             const res = await connection.patch(`/flows/${flowName}`, {"data": currentFlow});
-            console.log(res);
         } catch (e) {
             console.log(e);
         }
@@ -56,7 +51,6 @@ export function SavedFlowsMenu( { setActiveFlow, getCurrentFlow, connection, clo
     async function deleteFlow(flowName) {
         try {
             const res = await connection.delete(`/flows/${flowName}`);
-            console.log(res);
             // if no exception is thrown, the flow was deleted correctly
             setFlowNames(flowNames.filter((name) => name !== flowName));
         } catch (e) {
@@ -67,7 +61,6 @@ export function SavedFlowsMenu( { setActiveFlow, getCurrentFlow, connection, clo
     async function loadFlow(flowName) {
         try {
             const res = await connection.get(`/flows/${flowName}`);
-            console.log(res);
             setActiveFlow(res.data);
             closeMenu();
         } catch (e) {

@@ -123,7 +123,7 @@ class Agent_{{agent.id}}:
     {% if agent.data.enabled_handoffs %}
     async def handoff_agent_{{agent.id}}(
             {% if not agent.data.uses_custom_handoff_prompt %}
-            prompt : str = Field(description = "prompt for the called agent")
+            prompt : str = Field(description = "prompt for the called agent"),
             {% endif %}
             {% for field in agent.data.input %}
             {{field}} : {{agent.data.input[field][0]}}{% if agent.data.input[field][1] != None %} = Field(description={{agent.data.input[field][1]}}) {% endif %}, 

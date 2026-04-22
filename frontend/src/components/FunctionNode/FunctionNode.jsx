@@ -32,7 +32,7 @@ export function FunctionNode({ id, data }) {
 
     return (
         <div style={{borderColor: data.editing ? "rgb(0, 213, 255)" : "black", backgroundColor: "white", padding: "0.75rem 1rem", border: "2px solid black", borderRadius: "50%"}}>
-            <NodeToolbar isVisible={data.editing} position={data.handlePositions === "left-right" ? Position.Top : data.handlePositions === "top-bottom" ? Position.Right : data.handlePositions === "right-left" ? Position.Bottom : Position.Left}>
+            <NodeToolbar isVisible={data.editing} position={Position.Top} offset={20}>
                 <button 
                     onClick={rotateHandles}
                     style={{

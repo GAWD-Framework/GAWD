@@ -53,6 +53,7 @@ const Operators = Object.freeze(enums.Operators);
  * The list represents the tree structure of the condition, in a depth-first order. 
  * Each element in the list is a tuple: [type, value], where type is a TokenType and value is the value of the token.
  * In the case of operators, the value is the string with the key. For example "GT" or "ADD".
+ * If TokenType = USERINPUT, the value is the list of tokens for the RichInput that will be use as prompt for the user
  * For state and input variables, the value is the string with the variable name, without the prefix "state." or "input.".
  * The first element is always an operator with BOOL resulttype, or a BOOL variable.
  * An empty list represents a comparator yet to be selected.

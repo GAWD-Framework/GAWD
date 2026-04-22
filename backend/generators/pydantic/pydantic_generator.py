@@ -30,7 +30,6 @@ class PydanticAIGenerator(CodeGenerator):
         Returns a list with all the input variables received by the agent. The variables are not necessary all used by the agent
         """
         predecessor_ids = agent["predecessors"]
-        print(f"The predecessors of node {agent['id']} are {predecessor_ids}")
         predecessor_outputs = []
 
         for node in flow_data["nodes"]:
@@ -84,9 +83,9 @@ class PydanticAIGenerator(CodeGenerator):
             if node["type"] == "agent":
                 # process rich input
                 node["data"]["prompt"] = self.process_rich_input(node["data"]["prompt"])
-                node["data"]["role"] = self.process_rich_input(node["data"]["role"])
-                node["data"]["goal"] = self.process_rich_input(node["data"]["goal"])
-                node["data"]["backstory"] = self.process_rich_input(node["data"]["backstory"])
+                node["data"]["role"] = self.process_rich_input(node["data"]["role"], external_input = True)
+                node["data"]["goal"] = self.process_rich_input(node["data"]["goal"], external_input = True)
+                node["data"]["backstory"] = self.process_rich_input(node["data"]["backstory"], external_input = True)
 
                 for i in range(len(node["data"]["knowledge_sources"])):
                     node["data"]["knowledge_sources"][i][0] = self.curate_string(node["data"]["knowledge_sources"][i][0])
@@ -123,8 +122,6 @@ class PydanticAIGenerator(CodeGenerator):
                             node["data"]["handoff_input_structure"][key][1] = self.curate_string(value[1])
                 # add a list with all the input variables received by the agent. The variables are not necessary all used by the agent
                 node["data"]["input"] = self.extract_input(data, node) if node["data"]["enabled_handoffs"] == False else node["data"]["handoff_input_structure"]
-                print("Agent input variables: ", node["data"]["input"])
-                print("Refactored agent node ", node["id"], ": ", node["data"]["input"])
         
 
             if node["type"] == "function":

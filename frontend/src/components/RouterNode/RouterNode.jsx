@@ -41,7 +41,7 @@ export function RouterNode({ id, data }) {
                 {minHeight: 10 + nHandles * 12, borderColor: data.editing ? "rgb(0, 213, 255)" : "black" } 
                 : 
                 {minWidth: 10 + nHandles * 12, borderColor: data.editing ? "rgb(0, 213, 255)" : "black" }}>
-            <NodeToolbar isVisible={data.editing} position={data.handlePositions === "left-right" ? Position.Top : data.handlePositions === "top-bottom" ? Position.Right : data.handlePositions === "right-left" ? Position.Bottom : Position.Left}>
+            <NodeToolbar isVisible={data.editing} position={Position.Top} offset={20}>
                 <button 
                     onClick={rotateHandles}
                     style={{

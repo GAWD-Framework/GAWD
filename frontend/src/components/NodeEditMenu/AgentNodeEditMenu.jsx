@@ -70,27 +70,20 @@ export function AgentNodeEditMenu({ node, getFlowState, getInputSchema, updateNo
         setUsesCustomHandoffPrompt(node.data.uses_custom_handoff_prompt);
         setHandoffPrompt(node.data.handoff_prompt);
 
-        console.log("Read node data: ", node.data)
     }, [node])
 
     useEffect(() => {
-        console.log("Evil useEffect running. isConnected: ", isConnected, "enabledHandoffs: ", enabledHandoffs)
         input = (!isConnected && enabledHandoffs) ? localHandoffInputStructure : getInputSchema(node.id);
         if (isConnected && enabledHandoffs) { // if the agent is connected, the handoff input schema is determined by the node connections
-            console.log("Agent is connected, using input schema from connections: ", getInputSchema(node.id))
             updateHandoffInputStructure({...getInputSchema(node.id)});
-        } else if (!isConnected && enabledHandoffs) { // if the agent is not connected but enabled as handoff, use the custom handoff input structure
-            console.log("Agent disconnected")
-        }
+        } // if the agent is not connected but enabled as handoff, use the custom handoff input structure
     }, [isConnected, enabledHandoffs])
 
     useEffect(() => {
-        console.log("Input schema for node ", node.id, " changed to: ", node.data.input_schema);
         if (isConnected && enabledHandoffs) {
             updateHandoffInputStructure({...node.data.input_schema});
         }
     }, [node.data.input_schema])
-    console.log("Node ", node.id, " Connected: ", isConnected, "Input schema: ", input, "Handoff input structure: ", localHandoffInputStructure)
 
 
     function updateOutputStructure(update) { // output structure is handled differently than other node data fields because we never want to set it to {}
@@ -352,7 +345,7 @@ export function AgentNodeEditMenu({ node, getFlowState, getInputSchema, updateNo
                 <RichInput onSubmit={setRole} storedText={role} rowMode={true} tokenOptions={
                     Object.entries(flowState).map(([key, value]) => ({value: [RichInputTokenTypes.STATEVAR, key, value[0]], label:(<p key={key} style={{color: DataTypeColors[value[0]]}}>{"state."+key}</p>)}))
                     .concat(
-                        input != null ? Object.entries(input).map(([key, value]) => ({value: [RichInputTokenTypes.INPUTVAR, key, value], label:(<p key={key} style={{color: DataTypeColors[value]}}>{"input."+key}</p>)})) : []
+                        Object.entries(input).map(([key, value]) => ({value: [RichInputTokenTypes.INPUTVAR, key, value[0]], label:(<p key={key} style={{color: DataTypeColors[value[0]]}}>{"input."+key}</p>)}))
                     )
                 } />
             </div>
@@ -365,7 +358,7 @@ export function AgentNodeEditMenu({ node, getFlowState, getInputSchema, updateNo
                 <RichInput onSubmit={setGoal} storedText={goal} rowMode={true} tokenOptions={
                     Object.entries(flowState).map(([key, value]) => ({value: [RichInputTokenTypes.STATEVAR, key, value[0]], label:(<p key={key} style={{color: DataTypeColors[value[0]]}}>{"state."+key}</p>)}))
                     .concat(
-                        input != null ? Object.entries(input).map(([key, value]) => ({value: [RichInputTokenTypes.INPUTVAR, key, value], label:(<p key={key} style={{color: DataTypeColors[value]}}>{"input."+key}</p>)})) : []
+                        Object.entries(input).map(([key, value]) => ({value: [RichInputTokenTypes.INPUTVAR, key, value[0]], label:(<p key={key} style={{color: DataTypeColors[value[0]]}}>{"input."+key}</p>)}))
                     )
                 } />
             </div>
@@ -378,7 +371,7 @@ export function AgentNodeEditMenu({ node, getFlowState, getInputSchema, updateNo
                 <RichInput onSubmit={setBackStory} storedText={backStory} rowMode={true} tokenOptions={
                     Object.entries(flowState).map(([key, value]) => ({value: [RichInputTokenTypes.STATEVAR, key, value[0]], label:(<p key={key} style={{color: DataTypeColors[value[0]]}}>{"state."+key}</p>)}))
                     .concat(
-                        input != null ? Object.entries(input).map(([key, value]) => ({value: [RichInputTokenTypes.INPUTVAR, key, value], label:(<p key={key} style={{color: DataTypeColors[value]}}>{"input."+key}</p>)})) : []
+                        Object.entries(input).map(([key, value]) => ({value: [RichInputTokenTypes.INPUTVAR, key, value[0]], label:(<p key={key} style={{color: DataTypeColors[value[0]]}}>{"input."+key}</p>)}))
                     )
                 } />
             </div>
@@ -558,7 +551,6 @@ export function AgentNodeEditMenu({ node, getFlowState, getInputSchema, updateNo
                     } 
                     placeholder={"Add a tool"}
                     onChange={(v) => {
-                        console.log("Selected tool: ", v)
                         if (!modelTools.includes(v)) {
                             setModelTools([...modelTools, v])
                         }
@@ -603,7 +595,6 @@ export function AgentNodeEditMenu({ node, getFlowState, getInputSchema, updateNo
                         const selected_agent = allHandoffAgents[v]
                         if (handoffs.some(stored => stored[0] == selected_agent[0] && stored[1] == selected_agent[1])) return // .includes() doesn't work for searching lists
                         setHandoffs([...handoffs, selected_agent])
-                        console.log("Added handoff: ", selected_agent)
                     }}
                     />
                 </span>

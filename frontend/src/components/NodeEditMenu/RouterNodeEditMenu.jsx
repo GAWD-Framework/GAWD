@@ -15,9 +15,7 @@ export function RouterNodeEditMenu({ node, updateNodeData, onHandleDelete, onMod
 
     const flowState = getFlowState(); // ran every render
 
-    console.log(output)
     useEffect(() => { // state isn't automatically updated when props change
-        console.log("Updating router")
         setNodeName(node.data.name)
         setnConditions(node.data.nconditions)
         setConditions(node.data.conditions)
@@ -130,7 +128,6 @@ export function RouterNodeEditMenu({ node, updateNodeData, onHandleDelete, onMod
                     onChange={(value) => {
                         // if (output.includes(newOutputField)) return; // key already in state
                         setOutput({...output, [value]: input[value]});
-                        console.log("Setting output to ", {...output, [value]: input.value});
                         }}
                         options={Object.keys(input).length == 0 ? 
                         [{disabled: true, label: <p>Node has no input</p>}] 

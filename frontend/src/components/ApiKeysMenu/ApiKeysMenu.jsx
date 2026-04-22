@@ -18,10 +18,8 @@ export function ApiKeysMenu( { apiKeys, setApiKeys, currentUser, connection, clo
 
   async function saveKeyToDb(identifier) {
     const key = inputRefs.current[identifier]?.value;
-    console.log("Saving key: ", key, " for: ", identifier);
     try {
       const res = await connection.post("/apikeys", {"identifier": identifier, "key": key});
-      console.log(res);
       // if no exception is thrown, the flow was saved correctly
       setDbKeys({...dbKeys, [identifier]: 1});
         
@@ -33,7 +31,6 @@ export function ApiKeysMenu( { apiKeys, setApiKeys, currentUser, connection, clo
   async function deleteKeyFromDb(identifier) {
     try {
       const res = await connection.delete(`/apikeys/${identifier}`);
-      console.log(res);
       // if no exception is thrown, the flow was deleted correctly
       setDbKeys({...dbKeys, [identifier]: 0});
     } catch (e) {

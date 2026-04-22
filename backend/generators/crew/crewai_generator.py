@@ -153,7 +153,6 @@ class CrewAIGenerator(CodeGenerator):
         return data
 
 def generate_code(nodes, api_keys, target_dir, target_script):   
-    print("Generating code for CrewAI... in directory: ", target_dir, " and script: ", target_script)
     generator = CrewAIGenerator(os.path.join(current_dir, 'templates/'))
     generator.generate_code("global.txt", nodes, target_dir, target_script)
     generator.generate_env(api_keys, target_dir)

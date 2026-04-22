@@ -15,7 +15,6 @@ export function LoginMenu({ onLogin, connection, closeMenu }) {
             localStorage.setItem("token", access_token);
 
             onLogin(username);
-            console.log(res)
         } catch (e) {
             console.log(e);
         }
@@ -29,7 +28,6 @@ export function LoginMenu({ onLogin, connection, closeMenu }) {
             localStorage.setItem("token", access_token);
 
             onLogin(username);
-            console.log(res)
         } catch (e) {
             console.log(e);
         }

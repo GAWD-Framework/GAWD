@@ -17,7 +17,6 @@ def wikipedia_tool_core(topic: str) -> str:
     url = 'https://en.wikipedia.org/api/rest_v1/page/summary/' + page['key']
     response = requests.get(url, headers=headers)
     data = response.json()
-    print(data['extract'])
     return data['extract']
 
 

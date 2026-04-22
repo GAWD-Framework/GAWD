@@ -164,7 +164,10 @@ export function ActionEditMenu({ actionIndex, action, updateAction, flowState, i
     
     console.log("Rendering action with operators field ", field, " and dataType ", flowState[field][0]);
     return <div className="border-r-[1rem] border-r-transparent bg-clip-padding w-fit flex gap-4 items-center">
-        <p className="min-w-fit">{field} = </p>
+        <span className="flex items-center gap-2">
+            <p className="min-w-fit" style={{color: DataTypeColors[flowState[field][0]]}}>{field}</p>
+            <p> = </p>
+        </span>
         <div className="border-[2px] border-gray-500 border-dashed rounded-md p-2 w-fit">
         {renderAction(0, operators, flowState[field][0])[0]}
         </div>

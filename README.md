@@ -21,16 +21,16 @@ In addition to the State variables, each node has access to its input variables,
 
 ### Agent Nodes
 Agent nodes represent a call to an agent. An Agent's parameters can be configured from the node editing menu.
-- An agent uses an AI *Model*.
+- An agent uses a language *Model*.
 - Agents have three system prompts: *Role, Goal and Backstory*. Variables from the workflow State and the node's input can be embedded into these prompts, and their value will be updated every time the agent is called.
 - The agent's task is provided in a user *Prompt*. Variables from the workflow State and the node's input can be embedded into this prompt, and their value will be updated every time the agent is called.
 - Agents can have *Memory* of previous interactions within the same workflow execution.
-- By default, agents produce a response String. Users can also define a custom *Output Structure*, providing DataTypes and descriptions for each field to help the agent.
+- By default, agents produce a response String. Users can also define a custom *Output Structure*, providing DataTypes and descriptions for each field to help the agent interpret their meaning.
 - *Guardrails* validate the agent's output by checking a list of conditions. If one of the conditions isn't fulfilled, a feedback message can be used to prompt the agent to try again. Guardrail conditions can use variables from the State, the agent's output, and the node's input, as well as values asked from the user during the execution. This enables users to manually validate the agent's output before proceeding. 
 - A custom *Maximum Number of Attempts* prevents excessive token use and infinite loops when an agent repeatedly fails to pass all guardrail checks or produce a response using the correct output structure.
 - Agent *Tools* allow agents to perform specific actions if they so choose. A list of pre-made tools is available, and technical users can easily add their own.
 - Agents can draw from a series of *Knowledge Sources* to extract the information needed to fulfill their tasks. Currently, .txt and .md files can be used as knowledge sources.
-- Agents can call on other agents dynamically through *Handoffs*. Agents that can be called through handoffs can be both connected or disconnected from the graph, and the user can provide a handoff description, a handoff input structure, and a handoff prompt.
+- Agents can call on other agents dynamically through *Handoffs*. Agents that can be called through handoffs can be both connected or disconnected from the graph, and the user can provide a description that will help the rest of the agents decide whether to use the handoff. If the agent is disconnected from the graph, users can specify handoff input structure that will act as the node's input (it can be used when defining the agent's role, goal, backstory and guardrails). Additionally, users can define a prompt that will be used when the agent is called through a handoff. Otherwise, the prompt will be provided by the calling agent. After a handoff call is complete, control returns to the calling agent. The graph-based order of execution for the nodes is not affected by handoffs.
 
 The agent's output is used as the node's output, and is passed as input to the next node.
 
@@ -51,4 +51,10 @@ Users must provide the API keys that will be needed for the workflow's execution
 ![Platform Main View Screenshot](readme_figures/execution_terminal.png)
 
 ## User Accounts
-Users that create an account using a username and password can save and load their designs to have them persist across sessions. Registered users can choose whether to save their API keys or to enter them every session.
+Users that create an account with a username and password can save and load their workflow designs to have them persist across sessions. Registered users can choose whether to save their API keys or to enter them every session.
+
+
+
+
+### Credits
+This project uses [Heroicons](https://heroicons.com/) by Tailwind Labs.

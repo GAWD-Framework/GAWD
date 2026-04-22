@@ -13,7 +13,6 @@ export function FunctionNodeEditMenu({ node, updateNodeData, onModifyNodeOutput,
 
     const flowState = getFlowState(); // ran every render
     const input = getInputSchema(node.id);
-    console.log("Input: ", input);
 
     useEffect(() => { // state isn't automatically updated when props change
         setNodeName(node.data.name)
@@ -112,7 +111,6 @@ export function FunctionNodeEditMenu({ node, updateNodeData, onModifyNodeOutput,
                 onChange={(value) => {
                     // if (output.includes(newOutputField)) return; // key already in state
                     setOutput({...output, [value]: input[value]});
-                    console.log("Setting output to ", {...output, [value]: input.value});
                     }}
                     options={Object.keys(input).length == 0 ? 
                     [{disabled: true, label: <p>Node has no input</p>}] 

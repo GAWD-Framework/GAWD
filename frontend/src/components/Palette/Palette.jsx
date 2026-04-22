@@ -95,28 +95,24 @@ export function Palette() {
 
   function addAgentNode(position = {x: 0, y: 0}) {
     const newNode = { id: 'n' + totalNodeCount.current++, type: 'agent', position: position, data: {handlePositions: "left-right", name: 'Agent', logging: true, max_attempts: 5, prompt: [], role: [], goal: [], backstory: [], model_provider: -1, model_name: '', model_tools: [], has_memory: false, uses_custom_output_structure: false, output_structure: {agent_response: [DataTypes.STR, null]}, guardrails: [], knowledge_sources: [], handoffs: [], connected: false, enabled_handoffs: false, handoff_description: null, handoff_input_structure: {}, uses_custom_handoff_prompt: false, handoff_prompt: [], input_schema: {}}};
-    console.log("New node: ", newNode);
     setNodes([...nodes, newNode]);
     focusNode(newNode);
   }
 
   function addRouterNode(position = {x: 0, y: 0}) {
     const newNode = { id: 'n' + totalNodeCount.current++, type: 'router', position: position, data: {handlePositions: "left-right", connected: false, name: 'Router', nconditions: 1, conditions: [[]], output_structure: {}, input_schema: {}} };
-    console.log("New node: ", newNode);
     setNodes([...nodes, newNode]);
     focusNode(newNode);
   }
   
   function addFunctionNode(position = {x: 0, y: 0}) {
     const newNode = { id: 'n' + totalNodeCount.current++, type: 'function', position: position, data: {handlePositions: "left-right", connected: false, name: 'Action', nactions: 1, actions: [[undefined, []]], output_structure: {}, input_schema: {}} };
-    console.log("New node: ", newNode);
     setNodes([...nodes, newNode]);
     focusNode(newNode);
   }
 
   function addEndNode(position = {x: 0, y: 0}) {
     const newNode = { id: 'n' + totalNodeCount.current++, type: 'end', position: position, data: {connected: false, name: 'End', output_structure: {}, input_schema: {}} };
-    console.log("New node: ", newNode);
     setNodes([...nodes, newNode]);
     focusNode(newNode);
   }
@@ -186,7 +182,6 @@ export function Palette() {
    * @returns 
    */
   function getNodeInputSchema(nodeId, edgesToIgnore = [], newConnection = null, overrides = {}) {
-    // console.log("Getting input schema for node ", nodeId, "with overrides ", overrides);
     function computeSchemaIntersection(schemas) {
       const referenceSchema = schemas[0];
     
@@ -231,13 +226,10 @@ export function Palette() {
      * @returns True if the node's output structure was changed, so the successor nodes should also be updated 
      */
     function changeIndividualNodeInputSchema(nodeId, newInputSchema) {
-      console.log("Changing input schema for node ", nodeId,  "to ", newInputSchema);
 
       const node = nodes.find(node => node.id === nodeId);
-      console.log(node);
       const oldInputSchema = node.data.input_schema; // used to check if there have been type changes
       const keysToDelete = Object.keys(oldInputSchema).filter(key => !(key in newInputSchema) || oldInputSchema[key][0] !== newInputSchema[key][0]);
-      console.log("Keys to delete: ", keysToDelete, " old input schema: ", oldInputSchema, " new input schema: ", newInputSchema);
 
       if (keysToDelete.length === 0) {
         node.data.input_schema = newInputSchema;
@@ -248,6 +240,8 @@ export function Palette() {
         for (const token of condition) {
           if (token[0] == TokenTypes.INPUTVAR && keysToDelete.includes(token[1])) {
             token[0] = TokenTypes.UNKNOWN;
+          } else if (token[0] == TokenTypes.USERINPUT) {
+            updateInputFieldsFromRichInput(token[1]);
           }
         }  
       }
@@ -256,6 +250,8 @@ export function Palette() {
         for (const token of action) {
           if (token[0] == TokenTypes.INPUTVAR && keysToDelete.includes(token[1])) {
             token[0] = TokenTypes.UNKNOWN;
+          } else if (token[0] == TokenTypes.USERINPUT) {
+            updateInputFieldsFromRichInput(token[1]);
           }
         }
       }
@@ -312,7 +308,6 @@ export function Palette() {
           }
         });
         
-        console.log("Updated input structure for node ", nodeId, ": ", newInputSchema);
         node.data.input_schema = newInputSchema;
         return outpuStructureModified;
       }
@@ -330,7 +325,6 @@ export function Palette() {
       const nodeId = nodesToUpdate.shift();
       const newSchema = getNodeInputSchema(nodeId);
       const propagate = changeIndividualNodeInputSchema(nodeId, newSchema);
-      console.log("Propagate from node ", nodeId, ": ", propagate);
       if (!propagate) {
         continue;
       }
@@ -375,7 +369,6 @@ export function Palette() {
     const targetNode = nodes.find(n => n.id === target);
     if (targetNode.type === "agent") {
       if (!targetNode.data.connected && targetNode.data.enabled_handoffs) {
-        console.log("Trick")
         targetNode.data.input_schema = targetNode.data.handoff_input_structure; // this will make the changeNodeInputSchema delete the handoff input variables that were being used
       }
     }
@@ -384,7 +377,6 @@ export function Palette() {
     const sourceNode = nodes.find(n => n.id === source);
     if (sourceNode.type === "agent") {
       if (!sourceNode.data.connected && sourceNode.data.enabled_handoffs) {
-        console.log("Trick")
         //sourceNode.data.input_schema = sourceNode.data.handoff_input_structure; // can't do the same trick because onConnectInputUpdate doesn't modify the source node's input schema
         changeNodeInputSchema(source, {}); // remove handoff input variables from the source agent
       }
@@ -430,8 +422,6 @@ export function Palette() {
    * Used when removing a condition from a router node
    */
   function onHandleDelete(nodeId, handleId) {
-    console.log("All edges: ", edges);
-    console.log("Deleting edges from node ", nodeId, " with handle ", handleId);
     setEdges((edges) =>
       edges.filter((e) => !(e.source == nodeId && e.sourceHandle == handleId.toString()))
     );
@@ -478,11 +468,13 @@ export function Palette() {
    * Resets operands form conditions / actions / guardrails that use the given state fields.
    */
   function removeStateFieldsFromNodes(stateFields) {
-  
     function removeStateFieldsFromCondition(condition, stateFields) {
       for (const token of condition) {
         if (token[0] == TokenTypes.STATEVAR && stateFields.includes(token[1])) {
           token[0] = TokenTypes.UNKNOWN;
+        }
+        else if (token[0] == TokenTypes.USERINPUT) {
+          removeStateFieldsFromRichInput(token[1], stateFields);
         }
       }  
     }
@@ -491,6 +483,9 @@ export function Palette() {
       for (const token of action) {
         if (token[0] == TokenTypes.STATEVAR && stateFields.includes(token[1])) {
           token[0] = TokenTypes.UNKNOWN;
+        }
+        else if (token[0] == TokenTypes.USERINPUT) {
+          removeStateFieldsFromRichInput(token[1], stateFields);
         }
       }
     }
@@ -517,11 +512,9 @@ export function Palette() {
         for (const condition of node.data.conditions) {
           removeStateFieldsFromCondition(condition, stateFields);
         }
-
-        return;
       }
 
-      if (node.type === "agent") {
+      else if (node.type === "agent") {
         for (const guardrail of node.data.guardrails) {
           removeStateFieldsFromCondition(guardrail[0], stateFields);
         }      
@@ -531,32 +524,92 @@ export function Palette() {
         removeStateFieldsFromRichInput(node.data.backstory, stateFields);
         removeStateFieldsFromRichInput(node.data.prompt, stateFields);
         removeStateFieldsFromRichInput(node.data.handoff_prompt, stateFields);
-        
-
-        return;
       }
 
-      if (node.type === "function") {
+      else if (node.type === "function") {
         for (const action of node.data.actions) {
           if (stateFields.includes(action[0])) {
             action[0] = undefined;
             action[1] = [];
-          }
-
-          else {
+          } else {
             removeStateFieldsFromAction(action[1], stateFields);
           }
         }
-
-        return;
       }
 
-      if (node.type === "end") {
+      else if (node.type === "end") {
         for (const field of stateFields) {
           delete node.data.output_structure[field];
         }
-        
-        return;
+      }
+
+    }
+  }
+
+  function onChangeStateFieldType(fieldName, newType) {
+    function modifyStateFieldsFromCondition(condition) {
+      for (const token of condition) {
+        if (token[0] == TokenTypes.STATEVAR && token[1] == fieldName) {
+          token[0] = TokenTypes.UNKNOWN;
+        }
+        else if (token[0] == TokenTypes.USERINPUT) {
+          modifyStateFieldsFromRichInput(token[1]);
+        }
+      }  
+    }
+
+    function modifyStateFieldsFromAction(action) {
+      for (const token of action) {
+        if (token[0] == TokenTypes.STATEVAR && token[1] == fieldName) {
+          token[0] = TokenTypes.UNKNOWN;
+        }
+        else if (token[0] == TokenTypes.USERINPUT) {
+          modifyStateFieldsFromRichInput(token[1]);
+        }
+      }
+    }
+
+    function modifyStateFieldsFromRichInput(richInput) {
+      for (const token of richInput) {
+        if (token[0] == RichInputTokenTypes.STATEVAR && token[1] == fieldName) {
+          token[2] = newType;
+        }
+      }
+    }
+
+    for (const node of nodes) {
+      if (node.type === "router") {
+        for (const condition of node.data.conditions) {
+          modifyStateFieldsFromCondition(condition);
+        }
+      }
+
+      else if (node.type === "agent") {
+        for (const guardrail of node.data.guardrails) {
+          modifyStateFieldsFromCondition(guardrail[0]);
+        }      
+
+        modifyStateFieldsFromRichInput(node.data.role);
+        modifyStateFieldsFromRichInput(node.data.goal);
+        modifyStateFieldsFromRichInput(node.data.backstory);
+        modifyStateFieldsFromRichInput(node.data.prompt);
+        modifyStateFieldsFromRichInput(node.data.handoff_prompt);
+      }
+
+      else if (node.type === "function") {
+        for (const action of node.data.actions) {
+          if (action[0] == fieldName) {
+            action[1] = [[TokenTypes.UNKNOWN, undefined]];
+          } else {
+            modifyStateFieldsFromAction(action[1]);
+          }
+        }
+      }
+
+      else if (node.type === "end") {
+        if (node.data.output_structure[fieldName])
+          node.data.output_structure[fieldName][0] = newType;
+      
       }
 
     }
@@ -700,7 +753,7 @@ export function Palette() {
         </span>
         <NodeSelectMenu/>
       </div>
-      <NodeEditMenu node={editingNode ? nodes.find((n) => n.id === editingNode.id) ?? null : null} updateNodeData={updateNodeData} onDeleteStateField={removeStateFieldsFromNodes} onHandleDelete={onHandleDelete} onModifyNodeOutput={onModifyNodeOutput} onRenameAgent={onRenameAgent} removeAsHandoff={removeAsHandoff} getInputSchema={getNodeInputSchema} getFlowState={() => rfInstance.getNode("start").data.state} getAllHandoffAgents={getAllHandoffAgents} /> 
+      <NodeEditMenu node={editingNode ? nodes.find((n) => n.id === editingNode.id) ?? null : null} updateNodeData={updateNodeData} onDeleteStateField={removeStateFieldsFromNodes} onChangeStateFieldType={onChangeStateFieldType} onHandleDelete={onHandleDelete} onModifyNodeOutput={onModifyNodeOutput} onRenameAgent={onRenameAgent} removeAsHandoff={removeAsHandoff} getInputSchema={getNodeInputSchema} getFlowState={() => rfInstance.getNode("start").data.state} getAllHandoffAgents={getAllHandoffAgents} /> 
     </div>
     
     </>

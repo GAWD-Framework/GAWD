@@ -13,12 +13,10 @@ export function ExecutionTerminal({ framework, flowData, closeTerminal, currentU
     function addMessage(newMessage) {
         setMessages(oldMessages => [...oldMessages, newMessage]);
     }
-    console.log("Username: ", currentUser);
     useEffect(() => {
         // on each render, a new connection is created
         let url = "ws://localhost:8000/ws"
         if (currentUser != "") {
-            console.log("Adding username to url")
             url += `?username=${currentUser}`
         }
         const socket = new WebSocket(url);
@@ -32,7 +30,6 @@ export function ExecutionTerminal({ framework, flowData, closeTerminal, currentU
         // Listen for messages
         socket.addEventListener("message", (event) => {
             const message = JSON.parse(event.data)
-            console.log("Message from server ", message);
             addMessage(message);
         })
 

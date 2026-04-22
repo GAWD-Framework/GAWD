@@ -52,7 +52,6 @@ class Agent_{{agent.id}}(AbstractAgent):
             memory_string = "This is the conversation history so far:\n" \
                 f"[{self.conversation_history}]"
             messages = new_messages + [{"role" : "system", "content" : memory_string}]
-            self.conversation_history += self.messages_to_string(new_messages)
         self.conversation_history += self.messages_to_string(new_messages)
         {% endif %}
         {% if agent.data.knowledge_sources|length > 0 %}
@@ -61,6 +60,9 @@ class Agent_{{agent.id}}(AbstractAgent):
         knowledge_string += "\nFile " + {{knowledgeSource[0]}} + ":\n" + {{knowledgeSource[1]}}
         {% endfor %}
         messages = messages + [{"role" : "system", "content" : knowledge_string}]
+        {% endif %}
+        {% if agent.data.uses_custom_output_structure %}
+        messages = messages + [{"role": "system", "content": "Your reply must conform to the specified output format. Don't include any text."}]
         {% endif %}
         request_string = "This is the current request:\n" \
                 f"{self.messages_to_string(messages)}\n"
@@ -107,7 +109,7 @@ class Agent_{{agent.id}}(AbstractAgent):
             feedback_string += self.messages_to_string(feedback_messages)
 
         if (accepted == False and ntries == max_tries):
-            return "ERROR: max tries exceeded"
+            raise CriticalGuardrailViolation("Reached maximum number of attempts")
 
         {% if agent.data.has_memory %}
         {% if agent.data.uses_custom_output_structure %}
@@ -155,19 +157,19 @@ class Agent_{{agent.id}}(AbstractAgent):
             messages = [
                 {"role": "user", "content": prompt}
             ]
-            agent_output = await flow.agent_wrapper_{{agent.id}}.kickoff(messages, flow.state, input)
+            agent_output = await flow.agent_wrapper_{{agent.id}}.kickoff(messages, input)
             return agent_output
 
-        def run_async_agent(self, {% for field in agent.data.handoff_input_structure %}{{field}}, {% endfor %}):
+        def run_async_agent(self, {% if not agent.data.uses_custom_handoff_prompt %}prompt, {% endif %}{% for field in agent.data.handoff_input_structure %}{{field}}, {% endfor %}):
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(self._arun({% for field in agent.data.handoff_input_structure %}{{field}}, {% endfor %}))
+            result = loop.run_until_complete(self._arun({% if not agent.data.uses_custom_handoff_prompt %}prompt, {% endif %}{% for field in agent.data.handoff_input_structure %}{{field}}, {% endfor %}))
             loop.close()
             return result
         
-        def _run(self, {% for field in agent.data.handoff_input_structure %}{{field}}, {% endfor %}):
+        def _run(self, {% if not agent.data.uses_custom_handoff_prompt %}prompt, {% endif %}{% for field in agent.data.handoff_input_structure %}{{field}}, {% endfor %}):
             with ThreadPoolExecutor() as executor:
-                future = executor.submit(self.run_async_agent, {% for field in agent.data.handoff_input_structure %}{{field}}, {% endfor %})
+                future = executor.submit(self.run_async_agent, {% if not agent.data.uses_custom_handoff_prompt %}prompt, {% endif %}{% for field in agent.data.handoff_input_structure %}{{field}}, {% endfor %})
                 result = future.result()
                 return result
     {% endif %}

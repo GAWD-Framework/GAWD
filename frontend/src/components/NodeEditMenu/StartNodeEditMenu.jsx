@@ -1,7 +1,7 @@
 import { StateEditMenu } from '../StateEditMenu/StateEditMenu'
 import { useState, useEffect } from 'react'
 
-export function StartNodeEditMenu({ node, updateNodeData, onDeleteStateField }) {
+export function StartNodeEditMenu({ node, updateNodeData, onDeleteStateField, onChangeStateFieldType }) {
     const [knowledgeSources, setKnowledgeSources] = useState(node.data.knowledge_sources);
 
     useEffect(() => {
@@ -13,14 +13,13 @@ export function StartNodeEditMenu({ node, updateNodeData, onDeleteStateField }) 
     }, [knowledgeSources])
 
     function updateState(update) {
-        console.log("Updating state to: ", update)
         updateNodeData(node.id, {state: update}) 
     }
 
     return (
         <div className="flex flex-col gap-4">
             <p className="text-3xl text-center">Start Node</p>
-            <StateEditMenu flowState={node.data.state} updateFlowState={updateState} onDeleteStateField={onDeleteStateField} />
+            <StateEditMenu flowState={node.data.state} updateFlowState={updateState} onDeleteStateField={onDeleteStateField} onChangeStateFieldType={onChangeStateFieldType} />
         </div>
 
     )

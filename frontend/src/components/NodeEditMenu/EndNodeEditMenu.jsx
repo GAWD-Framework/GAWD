@@ -48,7 +48,7 @@ export function EndNodeEditMenu({ node, updateNodeData, getFlowState, getInputSc
                 <CustomSelect 
                 placeholder={"Add variable"}
                 onChange={(value) => {
-                    setOutput({...output, [value[0]] : [value[1], value[2]]});
+                    setOutput({...output, [value[0]] : [value[1], value[2]]}); // TODO: what if a state variable and an input variable have the same name? 
                 }}
                 options={
                     Object.entries(flowState).length === 0 && (input == null || Object.entries(input).length === 0) ?

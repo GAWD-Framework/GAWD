@@ -4,7 +4,7 @@ import { Button } from '../Button/Button'
 import { ToolTip } from '../ToolTip/ToolTip'
 import { CustomSelect } from '../CustomSelect/CustomSelect'
 import { TextInput } from '../TextInput/TextInput'
-export function StateEditMenu({ flowState, updateFlowState, onDeleteStateField }) {
+export function StateEditMenu({ flowState, updateFlowState, onDeleteStateField, onChangeStateFieldType }) {
     const [localState, setLocalState] = useState(flowState)
     useEffect(() => { // state isn't automatically updated when props change
         setLocalState(flowState)
@@ -40,7 +40,11 @@ export function StateEditMenu({ flowState, updateFlowState, onDeleteStateField }
                             </span>
                             <CustomSelect
                             value={DataTypeNames[value[0]]} 
-                            onChange={(v) => setLocalState({...localState, [key]: [Number(v), value[1], null]})} 
+                            onChange={(v) => {
+                                if (v == value[0]) return; // same type selected, do nothing
+                                onChangeStateFieldType(key, Number(v));
+                                setLocalState({...localState, [key]: [Number(v), value[1], null]})
+                            }} 
                             options= {
                                 Object.values(DataTypes).map((datatype) => ({value: datatype, label:
                                 <p style={{color: DataTypeColors[datatype]}}>{DataTypeNames[datatype]}</p>, color: DataTypeColors[datatype]}))

@@ -33,7 +33,7 @@ export function AgentNode({ id, data }) {
 
     return (
         <div>
-            <NodeToolbar isVisible={data.editing} position={data.handlePositions === "left-right" ? Position.Top : data.handlePositions === "top-bottom" ? Position.Right : data.handlePositions === "right-left" ? Position.Bottom : Position.Left}>
+            <NodeToolbar isVisible={data.editing} position={Position.Top} offset={20}>
                 <button 
                     onClick={rotateHandles}
                     style={{
@@ -42,7 +42,7 @@ export function AgentNode({ id, data }) {
                         borderRadius: '4px',
                         padding: '4px 8px',
                         cursor: 'pointer',
-                        fontSize: '12px'
+                        fontSize: '12px',
                     }}
                 >
                     ⟳ Rotate

@@ -134,7 +134,6 @@ async def test():
 
         print("Connected successfully")
         clients = await collection.find().to_list(length=None)
-        print(clients)
 
         # other application code
 

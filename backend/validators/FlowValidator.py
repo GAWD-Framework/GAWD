@@ -105,6 +105,7 @@ class FlowValidator:
         # router nodes have one successor per handle. Store them in a list, following the same order as the handles
         outgoing_edges = [edge for edge in edges if edge['source'] == node['id']] # edges sourcing from the node
         successors = []
+        num_outgoing_edges = 0
         for edge in outgoing_edges:
             handle_idx = int(edge['sourceHandle'])
             
@@ -116,8 +117,9 @@ class FlowValidator:
                 raise ValueError(f"Router node {name} cannot have multiple outgoing edges from the same handle.")
             
             successors[handle_idx] = edge['target']
-            
-        if (len(successors) != data['nconditions'] + 1):
+            num_outgoing_edges += 1
+
+        if (num_outgoing_edges != data['nconditions'] + 1):
             raise ValueError(f"Router node {name} must have {data['nconditions'] + 1} outgoing edges.")
         node['successors'] = successors
 
@@ -164,6 +166,60 @@ class FlowValidator:
     def validate_end(self, node, edges) -> list[str]: 
         return []
 
+
+    def check_incomplete_graph(self, nodes):
+        """
+        Raises ValueError if the graph is incomplete. This means there are nodes from which no end node is reachable. 
+        Function assumes all connected nodes have a successors field.
+        """
+        # Find the start node. next() with a default of None replicates JS Array.find()
+        start_node = next((node for node in nodes if node['type'] == "start"), None)
+        reachable_node_ids = set()
+        reachable_nodes = []
+        queue = [start_node] # holds entire nodes, not ids
+        
+        while len(queue) > 0:
+            node = queue.pop(0)
+            reachable_node_ids.add(node['id'])
+            reachable_nodes.append(node)
+            
+            if node['type'] in ["agent", "function", "start"]:
+                successor = node['successors'] # agent, function and start nodes have a single successor
+                if successor not in reachable_node_ids:
+                    successor_node = next((n for n in nodes if n['id'] == successor), None)
+                    queue.append(successor_node)
+                        
+            elif node['type'] == "router":
+                for successor in node['successors']:
+                    if successor not in reachable_node_ids:
+                        successor_node = next((n for n in nodes if n['id'] == successor), None)
+                        queue.append(successor_node)
+                            
+        predecessor_ids = {node['id'] : [] for node in reachable_nodes}
+        for node in reachable_nodes:
+            if node['type'] in ["agent", "function", "start"]:
+                successor = node['successors']
+                predecessor_ids[successor].append(node['id'])
+            elif node['type'] == "router":
+                for successor in node['successors']:
+                    predecessor_ids[successor].append(node['id'])
+
+        reachable_end_nodes = [node for node in reachable_nodes if node['type'] == "end"]
+        reachable_from_end_nodes_ids = set()
+        queue = reachable_end_nodes[:] # copy the list
+        while len(queue) > 0:
+            node = queue.pop(0)
+            reachable_from_end_nodes_ids.add(node['id'])
+
+            for predecessor_id in predecessor_ids[node['id']]:
+                if predecessor_id not in reachable_from_end_nodes_ids:
+                    predecessor_node = next((n for n in nodes if n['id'] == predecessor_id), None)
+                    queue.append(predecessor_node)
+
+        problematic_nodes = [node_id for node_id in reachable_node_ids if node_id not in reachable_from_end_nodes_ids]
+        if len(problematic_nodes) > 0:
+            raise ValueError(f"All connected nodes must lead to an end node.")
+        
     def validate_flow(self, nodes, edges) -> list[str]:
         """
         Validates a flow. Raises ValueError if the flow is invalid.
@@ -187,4 +243,7 @@ class FlowValidator:
             elif node['type'] == "end":
                 new_warnings = self.validate_end(node, edges)
                 warnings.extend(new_warnings)
+        
+        self.check_incomplete_graph(nodes)
+
         return warnings

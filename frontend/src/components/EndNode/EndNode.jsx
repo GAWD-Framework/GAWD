@@ -31,7 +31,7 @@ export function EndNode({ id, data }) {
 
     return (
         <div style={{borderColor: data.editing ? "rgb(0, 213, 255)" : "black", background: "#b3bcf1", height: "60px", textAlign: "center", transform: "rotate(45deg)", width: "60px", border: "2px solid black", borderRadius: "10%" }}>
-            <NodeToolbar isVisible={data.editing} position={ data.handlePositions === "right" || data.handlePositions === "bottom" ? Position.Top : Position.Bottom} offset={30}>
+            <NodeToolbar isVisible={data.editing} position={Position.Top} offset={30}>
                 <button 
                     onClick={rotateHandles}
                     style={{

@@ -4,7 +4,7 @@ import { FunctionNodeEditMenu } from './FunctionNodeEditMenu.jsx'
 import { StartNodeEditMenu } from './StartNodeEditMenu.jsx'
 import { EndNodeEditMenu } from './EndNodeEditMenu.jsx'
 
-export function NodeEditMenu({ node, updateNodeData, onDeleteStateField, onHandleDelete, onModifyNodeOutput, onRenameAgent, removeAsHandoff, getInputSchema, getFlowState, getAllHandoffAgents }) {
+export function NodeEditMenu({ node, updateNodeData, onDeleteStateField, onChangeStateFieldType, onHandleDelete, onModifyNodeOutput, onRenameAgent, removeAsHandoff, getInputSchema, getFlowState, getAllHandoffAgents }) {
     
     return (
         <div className="flex flex-col max-w-[50rem] min-w-[30rem] w-1/2 h-full bg-[#97a1ac] overflow-auto p-4">
@@ -21,7 +21,7 @@ export function NodeEditMenu({ node, updateNodeData, onDeleteStateField, onHandl
                         case 'function':
                             return <FunctionNodeEditMenu node={node} updateNodeData={updateNodeData} getFlowState={getFlowState} getInputSchema={getInputSchema} onModifyNodeOutput={onModifyNodeOutput} />
                         case 'start':
-                            return <StartNodeEditMenu node={node} updateNodeData={updateNodeData} onDeleteStateField={onDeleteStateField}/>
+                            return <StartNodeEditMenu node={node} updateNodeData={updateNodeData} onDeleteStateField={onDeleteStateField} onChangeStateFieldType={onChangeStateFieldType} />
                         case 'end':
                             return <EndNodeEditMenu node={node} updateNodeData={updateNodeData} getFlowState={getFlowState} getInputSchema={getInputSchema} />
                         default:

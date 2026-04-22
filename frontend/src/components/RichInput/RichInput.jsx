@@ -12,7 +12,7 @@ export function RichInput({ storedText, tokenOptions, onSubmit, rowMode = false 
         let html = "";
         for (const token of storedText) {
             if (token[0] == RichInputTokenTypes.STRING) {
-                html += token[1];
+                html += token[1].replace(/\n/g, '<br>');
             }
             else if (token[0] == RichInputTokenTypes.STATEVAR) {
                 html += `\u200B<span 
@@ -112,9 +112,7 @@ export function RichInput({ storedText, tokenOptions, onSubmit, rowMode = false 
 
     function handleSubmit() {
         const html = editorRef.current.innerHTML;
-        console.log("HTML: ", html);
         const list_to_store = extractTokens(html);
-        console.log("List to store: ", list_to_store);
         onSubmit(list_to_store);
     }
     
@@ -123,22 +121,25 @@ export function RichInput({ storedText, tokenOptions, onSubmit, rowMode = false 
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = html;
         const tokens = [];
-        console.log(tempDiv)
-        tempDiv.childNodes.forEach(node => {          
+        tempDiv.childNodes.forEach((node, i) => {          
             // pure string node
             if (node.nodeType === Node.TEXT_NODE) {
                 const cleanString = node.textContent.replace(/\u200B/g, '');
-                tokens.push([RichInputTokenTypes.STRING, cleanString]);
+                if (cleanString.length > 0) { // avoid adding empty tokens
+                    tokens.push([RichInputTokenTypes.STRING, cleanString]);
+                }
             } 
             // token span
             else if (node.hasAttribute('data-tokentype')) {
                 tokens.push([Number(node.getAttribute('data-tokentype')), node.getAttribute('data-fieldname'), Number(node.getAttribute('data-datatype'))]);
             }
-            // div containing tokens. Happens when the rich input contains newlines
+            // div containing tokens, or <br> tag. Happens when the rich input contains newlines
             else {
+                if (i != 0){
+                    tokens.push([RichInputTokenTypes.STRING, "\n"]);
+                } 
                 const inner_tokens = extractTokens(node.innerHTML);
                 inner_tokens.forEach(token => {
-                    tokens.push([RichInputTokenTypes.STRING, "\n"]);
                     tokens.push(token);
                   });
             }

@@ -40,6 +40,7 @@
         "MOD": {"resultType": 0, "noperands": 2, "structure": [0, "%", 0]},
         "LEN_CHAR": {"resultType": 0, "noperands": 1, "structure": ["N. of characters in ", 1]},
         "LEN_WORD": {"resultType": 0, "noperands": 1, "structure": ["N. of words in ", 1]},
+        "CONCAT": {"resultType": 1, "noperands": 2, "structure": [1, "concat", 1]},
         "GT": {"resultType": 2, "noperands": 2, "structure": [0, ">", 0]},
         "LT": {"resultType": 2, "noperands": 2, "structure": [0, "<", 0]},
         "GEQ": {"resultType": 2, "noperands": 2, "structure": [0, ">=", 0]},
@@ -47,6 +48,7 @@
         "EQ": {"resultType": 2, "noperands": 2, "structure": [0, "=", 0]},
         "NEQ": {"resultType": 2, "noperands": 2, "structure": [0, "!=", 0]},
         "EMPTY": {"resultType": 2, "noperands": 1, "structure": [1, "is empty"]},
+        "NOT": {"resultType": 2, "noperands": 1, "structure": ["not", 2]},
         "OR": {"resultType": 2, "noperands": 2, "structure": [2, "or", 2]},
         "AND": {"resultType": 2, "noperands": 2, "structure": [2, "and", 2]}
     },

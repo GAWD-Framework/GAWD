@@ -220,13 +220,11 @@ async def validate_code(framework: FrameworkName, flow_data: FlowData):
 async def websocket_endpoint(websocket: WebSocket, username: str = None):
 
     async def print_function(to_send : str):
-        print("Sending message: ", to_send)
         await websocket.send_json({"msg_type": "info", "msg_content": to_send})
 
     async def input_function(prompt : str):
         await websocket.send_json({"msg_type": "prompt", "msg_content": prompt})
         rec = await websocket.receive_text()
-        print("Received: ", rec)
         await websocket.send_json({"msg_type:": "info", "msg_content": f">{rec}"})
         return rec
     
@@ -234,7 +232,6 @@ async def websocket_endpoint(websocket: WebSocket, username: str = None):
     try:
         # receive framework and flow information
         data = await websocket.receive_json()
-        print("Received message: ", data)
         framework = data['framework']
         if framework == FrameworkName.CrewAI:
             await websocket.send_json({"msg_type": "info", "msg_content": "Generating code for CrewAI..."})
@@ -267,14 +264,13 @@ async def websocket_endpoint(websocket: WebSocket, username: str = None):
                 if key not in api_keys or api_keys[key] == "":
                     api_keys[key] = stored_api_keys[key]
         
-        print("API keys: ", api_keys)
         # generate code and imports it
-        #try: 
-        #    generate_code(framework, ExecutionData(flow_data=FlowNodes(nodes=nodes), api_keys=api_keys))
-        #except Exception as e: 
-        #    await websocket.send_text("Error generating code: " + e)
-        #    return
-        generate_code(framework, ExecutionData(flow_data=FlowNodes(nodes=nodes), api_keys=api_keys))
+        try: 
+            generate_code(framework, ExecutionData(flow_data=FlowNodes(nodes=nodes), api_keys=api_keys))
+        except Exception as e: 
+            await websocket.send_text("Error generating code: " + e)
+            return
+        #generate_code(framework, ExecutionData(flow_data=FlowNodes(nodes=nodes), api_keys=api_keys))
         
         created_module = load_module("../generated_code/test_script.py", "test_script")
 
